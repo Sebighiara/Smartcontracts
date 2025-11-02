@@ -65,18 +65,27 @@ public fun send_tip(tip_jar: &mut TipJar, payment: Coin<SUI>, ctx: &mut TxContex
         amount: tip_amount,
         total_tips_received: tip_jar.total_tips_received,
         tip_count: tip_jar.tip_count,
-    });
+    })
 }
-
+ 
 public fun get_owner(tip_jar: &TipJar): address {
     tip_jar.owner
 }
-
-public fun get_total_tip(tip_jar: &TipJar): u64 {
+ 
+public fun get_total_tips(tip_jar: &TipJar): u64 {
     tip_jar.total_tips_received
 }
-
+ 
 public fun get_tip_count(tip_jar: &TipJar): u64 {
     tip_jar.tip_count
 }
-
+ 
+public fun is_owner(tip_jar: &TipJar, addr: address): bool {
+    tip_jar.owner == addr
+}
+ 
+#[test_only]
+public fun init_for_testing(ctx: &mut TxContext) {
+    init(ctx);
+}
+ 

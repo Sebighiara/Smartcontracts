@@ -35,3 +35,66 @@ fun test_init_creates_tip_jar() {
     test_scenario::end(scenario);
 }
  
+#[test]
+fun test_multiple_tips() {
+    let mut scenario = test_scenario::begin(OWNER);
+ 
+    // Initialize the tip jar
+    {
+        let ctx = test_scenario::ctx(&mut scenario);
+        tip_jar::init_for_testing(ctx);
+    };
+    
+    //tipper 1 -> 0.5 SUI
+    test_scenario::next_tx(&mut scenario, TIPPER_1);
+    {
+        let mut tip_jar = test_scenario::take_shared<TipJar>(&scenario);
+        let ctx = test_scenario::ctx(&mut scenario);
+
+        let tip_coin = create_test_coin(500_000_000, ctx);
+    
+        tip_jar::send_tip(&mut tip_jar, tip_coin, ctx);
+
+        assert!(tip_jar::get_total_tips(&tip_jar) == 500_000_000, 0);
+        assert!(tip_jar::get_tip_count(&tip_jar) == 1, 1);
+
+        test_scenario::return_shared(tip_jar);
+    
+
+    };
+
+    test_scenario::next_tx(&mut scenario, TIPPER_2);
+    {
+        let mut tip_jar = test_scenario::take_shared<TipJar>(&scenario);
+        let ctx = test_scenario::ctx(&mut scenario);
+        
+        let tip_coin = create_test_coin(1_500_000_000, ctx);
+    
+        tip_jar::send_tip(&mut tip_jar, tip_coin, ctx);
+
+        assert!(tip_jar::get_total_tips(&tip_jar) == 2_000_000_000, 2);
+        assert!(tip_jar::get_tip_count(&tip_jar) == 2, 3);
+
+        test_scenario::return_shared(tip_jar);
+    
+    };
+
+    test_scenario::next_tx(&mut scenario, OWNER);
+    {
+        let coin1 = test_scenario::take_from_sender<Coin<SUI>>(&scenario);
+        let coin2 = test_scenario::take_from_sender<Coin<SUI>>(&scenario);
+
+        let value1 = coin::value(&coin);
+        let value2 = coin::value(&coin2);
+        let total_received = value1 + value2;
+
+        assert!(total_received == 2_000_000_000, 4);
+        assert!((value1 == 500_000_000 && value2 == 1_500_000_000) || (value1 == 1_500_000_000 && value2 = 500_000_000), 5);
+
+        test_scenario::return_to_sender(&scenario, coin1);
+        test_scenario::return_to_sender(&scenario, coin2);
+    };
+
+    test_scenario::end(&scenario);
+}   
+
